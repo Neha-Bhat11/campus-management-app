@@ -1,37 +1,44 @@
 const User = require('../models/User');
+const Department = require('../models/Department');
 const jwt = require('jsonwebtoken');
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
 
-// Register user with hashed password
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, role, department } = req.body;
 
-    // Basic validation
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields required' });
     }
 
-    // ❌ Block admin registration
     if (role === 'admin') {
       return res.status(403).json({ message: 'Admin registration not allowed' });
     }
 
-    // Check if user already exists
+    if (!department || !department.trim()) {
+      return res.status(400).json({ message: 'Department name is required' });
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create user
+    // ✅ Find department by name (case-insensitive), or create it if it doesn't exist yet
+    const deptName = department.trim();
+    let dept = await Department.findOne({ name: { $regex: new RegExp(`^${deptName}$`, 'i') } });
+    if (!dept) {
+      dept = await Department.create({ name: deptName });
+    }
+
     const user = await User.create({
       name,
       email,
       password,
       role,
-      department
+      department: dept._id
     });
 
     res.status(201).json({
@@ -46,9 +53,6 @@ const registerUser = async (req, res) => {
   }
 };
 
-
-// Login user with role
-// ✅ BUG FIX: wrapped in try/catch so a DB failure no longer crashes the server
 const loginWithRole = async (req, res, role) => {
   try {
     const { email, password } = req.body;
