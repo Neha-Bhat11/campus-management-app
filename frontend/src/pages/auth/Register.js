@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { registerUser } from "../../services/authService";
-import { getDepartments } from "../../services/adminService";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -12,35 +11,20 @@ const Register = () => {
     department: ""
   });
 
-  // ✅ BUG FIX: added error and success state instead of alert()
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [departments, setDepartments] = useState([]);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const data = await getDepartments();
-        setDepartments(data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    fetchDepartments();
-  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ BUG FIX: client-side validation before hitting the server
   const validate = () => {
     if (!form.name.trim()) return "Name is required";
     if (!form.email.trim()) return "Email is required";
     if (!form.password.trim()) return "Password is required";
     if (form.password.length < 6) return "Password must be at least 6 characters";
-    if (!form.department) return "Please select a department";
+    if (!form.department.trim()) return "Department name is required";
     return null;
   };
 
@@ -60,7 +44,6 @@ const Register = () => {
       setSuccess("Registered successfully! Redirecting to login...");
       setTimeout(() => navigate("/"), 1500);
     } catch (err) {
-      // Show the server's error message if available, otherwise a fallback
       setError(err?.response?.data?.message || "Registration failed. Please try again.");
     }
   };
@@ -70,20 +53,14 @@ const Register = () => {
       <div className="card shadow p-4" style={{ width: "450px" }}>
         <h3 className="text-center mb-4">Register</h3>
 
-        {/* ✅ BUG FIX: inline error and success messages */}
         {error && (
-          <div className="alert alert-danger py-2" role="alert">
-            {error}
-          </div>
+          <div className="alert alert-danger py-2" role="alert">{error}</div>
         )}
         {success && (
-          <div className="alert alert-success py-2" role="alert">
-            {success}
-          </div>
+          <div className="alert alert-success py-2" role="alert">{success}</div>
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* ✅ BUG FIX: added required to all inputs */}
           <input
             className="form-control mb-3"
             name="name"
@@ -114,14 +91,19 @@ const Register = () => {
             <option value="faculty">Faculty</option>
           </select>
 
-          <select className="form-select mb-3" name="department" onChange={handleChange} required>
-            <option value="">Select Department</option>
-            {departments.map((dep) => (
-              <option key={dep._id} value={dep._id}>
-                {dep.name}
-              </option>
-            ))}
-          </select>
+          {/* ✅ Free-text input instead of dropdown */}
+          <div className="mb-3">
+            <input
+              className="form-control"
+              name="department"
+              placeholder="Department (e.g. Computer Science)"
+              onChange={handleChange}
+              required
+            />
+            <div className="form-text text-muted" style={{ fontSize: "12px" }}>
+              Type your department name exactly as it should appear.
+            </div>
+          </div>
 
           <button className="btn btn-success w-100">Register</button>
         </form>
