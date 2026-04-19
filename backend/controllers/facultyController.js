@@ -16,7 +16,7 @@ const uploadMaterial = async (req, res) => {
       return res.status(400).json({ message: 'File is required' });
     }
 
-    // ✅ Validate file type
+    // ✅ Validate file type by MIME type AND file extension
     const allowedTypes = [
       'application/pdf',
       'image/jpeg',
@@ -25,8 +25,11 @@ const uploadMaterial = async (req, res) => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
 
-    if (!allowedTypes.includes(req.file.mimetype)) {
-      return res.status(400).json({ message: 'Invalid file type' });
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+    const fileExt = require('path').extname(req.file.originalname).toLowerCase();
+
+    if (!allowedTypes.includes(req.file.mimetype) || !allowedExtensions.includes(fileExt)) {
+      return res.status(400).json({ message: 'Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX' });
     }
 
     // ✅ Create study material
