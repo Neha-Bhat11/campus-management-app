@@ -1,23 +1,18 @@
-const User = require('../models/User');
-
+// ✅ QUALITY FIX: removed redundant User.findById() call.
+// authMiddleware already fetched and attached the full user as req.user,
+// so we can just read req.user.department directly — no extra DB call needed.
 const allowDepartmentAccess = () => {
-  return async (req, res, next) => {
-    try {
-      if (req.user.role === 'admin') {
-        return next();
-      }
-
-      const user = await User.findById(req.user._id);
-
-      if (!user.department) {
-        return res.status(403).json({ message: 'No department assigned' });
-      }
-
-      req.departmentFilter = { department: user.department };
-      next();
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+  return (req, res, next) => {
+    if (req.user.role === 'admin') {
+      return next();
     }
+
+    if (!req.user.department) {
+      return res.status(403).json({ message: 'No department assigned' });
+    }
+
+    req.departmentFilter = { department: req.user.department };
+    next();
   };
 };
 
