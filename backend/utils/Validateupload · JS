@@ -1,0 +1,30 @@
+const path = require('path');
+
+// ✅ QUALITY FIX: extracted shared file validation logic into one place.
+// Previously this code was copy-pasted in both facultyController.js
+// and studyMaterialController.js. Now both import this single helper.
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
+const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+
+const validateUploadedFile = (file) => {
+  if (!file) {
+    return 'File is required';
+  }
+
+  const fileExt = path.extname(file.originalname).toLowerCase();
+
+  if (!ALLOWED_MIME_TYPES.includes(file.mimetype) || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+    return 'Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX';
+  }
+
+  return null; // null means valid
+};
+
+module.exports = { validateUploadedFile };
