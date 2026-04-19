@@ -1,3 +1,4 @@
+const mongoose = require('mongoose'); // ✅ QUALITY FIX: moved to top with all other imports
 const User = require('../models/User');
 const Department = require('../models/Department');
 const Notice = require('../models/Notice');
@@ -16,8 +17,6 @@ const getAllStudents = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
-const mongoose = require("mongoose");
 
 const deleteStudent = async (req, res) => {
   try {
