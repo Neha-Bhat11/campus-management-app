@@ -1,4 +1,5 @@
 const StudyMaterial = require('../models/StudyMaterial');
+const { validateUploadedFile } = require('../utils/validateUpload'); // ✅ QUALITY FIX: use shared helper
 
 const getStudyMaterials = async (req, res) => {
   try {
@@ -7,9 +8,7 @@ const getStudyMaterials = async (req, res) => {
         ? {}
         : { department: req.user.department };
 
-    const materials = await StudyMaterial.find(filter)
-      .populate('department', 'name');
-
+    const materials = await StudyMaterial.find(filter).populate('department', 'name');
     res.json(materials);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -24,20 +23,9 @@ const uploadMaterial = async (req, res) => {
       return res.status(400).json({ message: 'Title and semester required' });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ message: 'File is required' });
-    }
-
-    const allowedTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/png',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-
-    if (!allowedTypes.includes(req.file.mimetype)) {
-      return res.status(400).json({ message: 'Invalid file type' });
+    const fileError = validateUploadedFile(req.file);
+    if (fileError) {
+      return res.status(400).json({ message: fileError });
     }
 
     const material = await StudyMaterial.create({
@@ -45,7 +33,7 @@ const uploadMaterial = async (req, res) => {
       semester,
       fileUrl: `/uploads/${req.file.filename}`,
       uploadedBy: req.user._id,
-      department: req.user.department
+      department: req.user.department,
     });
 
     res.status(201).json(material);
@@ -55,4 +43,3 @@ const uploadMaterial = async (req, res) => {
 };
 
 module.exports = { getStudyMaterials, uploadMaterial };
-
