@@ -3,40 +3,57 @@ import { getStudents, deleteStudent } from "../../services/adminService";
 
 const ManageStudents = () => {
   const [students, setStudents] = useState([]);
+  // ✅ QUALITY FIX: replaced alert() with inline error message
+  const [error, setError] = useState("");
 
   useEffect(() => {
-  const fetchStudents = async () => {
+    const fetchStudents = async () => {
+      try {
+        const data = await getStudents();
+        setStudents(data);
+      } catch (err) {
+        setError("Failed to load students. Please refresh the page.");
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  const handleDelete = async (id) => {
     try {
-      const data = await getStudents();
-      setStudents(data);
+      await deleteStudent(id);
+      setStudents(students.filter((s) => s._id !== id));
     } catch (err) {
-      console.log("Error fetching students:", err);
-      alert("Failed to load students");
+      setError("Failed to delete student. Please try again.");
     }
   };
 
-  fetchStudents();
-}, []);
-
-const handleDelete = async (id) => {
-  try {
-    await deleteStudent(id);
-    setStudents(students.filter((s) => s._id !== id));
-  } catch (err) {
-    console.log("Delete failed:", err);
-    alert("Failed to delete student");
-  }
-};
-
-  
-
   return (
-    <div>
+    <div className="container mt-4">
       <h2>Manage Students</h2>
+
+      {/* ✅ QUALITY FIX: inline error banner */}
+      {error && (
+        <div className="alert alert-danger py-2" role="alert">
+          {error}
+        </div>
+      )}
+
+      {students.length === 0 && !error && (
+        <p className="text-muted">No students found.</p>
+      )}
+
       {students.map((s) => (
-        <div key={s._id}>
-          {s.name} - {s.email}
-          <button onClick={() => handleDelete(s._id)}>Delete</button>
+        <div
+          key={s._id}
+          className="d-flex justify-content-between align-items-center border-bottom py-2"
+        >
+          <span>{s.name} — {s.email}</span>
+          <button
+            className="btn btn-sm btn-danger"
+            onClick={() => handleDelete(s._id)}
+          >
+            Delete
+          </button>
         </div>
       ))}
     </div>
