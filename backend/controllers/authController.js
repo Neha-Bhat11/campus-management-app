@@ -48,23 +48,33 @@ const registerUser = async (req, res) => {
 
 
 // Login user with role
+// ✅ BUG FIX: wrapped in try/catch so a DB failure no longer crashes the server
 const loginWithRole = async (req, res, role) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email, role });
-  if (!user) return res.status(401).json({ message: `${role} not found` });
+  try {
+    const { email, password } = req.body;
 
-  const isMatch = await user.matchPassword(password);
-  if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
- res.json({
-  token: generateToken(user._id),
-  user: {
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role
+    const user = await User.findOne({ email, role });
+    if (!user) return res.status(401).json({ message: `${role} not found` });
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    res.json({
+      token: generateToken(user._id),
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error, please try again later' });
   }
-});
 };
 
 const adminLogin = (req, res) => loginWithRole(req, res, 'admin');
