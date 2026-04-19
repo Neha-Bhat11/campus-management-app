@@ -15,11 +15,6 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    // Debug log (optional, remove in production)
-    console.log("Auth header received:", req.headers.authorization);
-    console.log("Token extracted:", token);
-    console.log("JWT_SECRET being used:", process.env.JWT_SECRET);
-
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
